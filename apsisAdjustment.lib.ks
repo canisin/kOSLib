@@ -56,7 +56,8 @@ LOCAL FUNCTION AdjustApsis {
   }
 
   PRINT "Burning..".
-  LOCK THROTTLE TO SIGMOID(apsisDiff).
+  LOCAL apsisDiffK IS apsisDiff/10.
+  LOCK THROTTLE TO SIGMOID(apsisDiff, apsisDiffK).
   WAIT UNTIL 
     apsisDiff <= 0
     OR AVAILABLETHRUST = 0.

@@ -45,7 +45,8 @@ FUNCTION Launch {
   WAIT UNTIL ALTITUDE > BODY:ATM:HEIGHT.
 
   PRINT "Reboosting apoapsis..".
-  LOCK THROTTLE TO SIGMOID(tApoapsis - APOAPSIS).
+  LOCAL apoBoostK IS (tApoapsis - APOAPSIS)/10.
+  LOCK THROTTLE TO SIGMOID(tApoapsis - APOAPSIS, apoBoostK).
   WAIT UNTIL APOAPSIS >= tApoapsis.
 
   WAIT 1.
