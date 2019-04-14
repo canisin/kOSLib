@@ -54,8 +54,10 @@ FUNCTION Launch {
   UNLOCK STEERING.
   AUTOSTAGE_OFF().
 
-  IF circularizationStage <> -1
+  IF circularizationStage <> -1 {
+    PRINT "Dropping boosters..".
     STAGE_TO(circularizationStage).
+  }
 
   CreateCircularizationNodeAtApo().
   ExecuteNode().

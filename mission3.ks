@@ -13,7 +13,11 @@ PRINT "BODY = " + BODY.
 PRINT "ENCOUNTER = " + ENCOUNTER.
 PRINT "STATUS = " + STATUS.
 
-AddInitialMissionStage().
+AddInitialMissionStage(SCRIPTPATH()).
+AddMissionStage({
+  PRINT "Deploying antennas.".
+  DeployAntennas().
+}).
 AddMissionStageTry({
   PRINT "Executing node..".
   RETURN ExecuteNode().
@@ -40,13 +44,14 @@ AddMissionStageWait({
 }, 100).
 AddMissionStageTry({
   PRINT "Adjusting reentry depth..".
-  RETURN AdjustPeriapsis(30_000).
+  RETURN AdjustPeriapsis(30_000, TRUE).
 }).
 AddMissionStageWait({
   PRINT "Awaiting reentry..".
   RETURN ALTITUDE <= 250_000.
 }, 100).
 AddMissionStageWait({
+  PRINT "Reentry imminent..".
   RETURN ALTITUDE <= 90_000.
 }, 5).
 AddMissionStage({
@@ -63,10 +68,15 @@ AddMissionStage({
 AddFinalMissionStage().
 RunMission().
 
+LOCAL FUNCTION DeployAntennas {
+  FOR antenna in SHIP:PARTSTAGGED("antenna")
+    antenna:GETMODULE("ModuleDeployableAntenna"):DoEvent("extend antenna").
+}
+
 LOCAL FUNCTION DoScience
 {
   LOCAL bay IS SHIP:PARTSTAGGED("bay1")[0]:GETMODULE("USAnimateGeneric").
-  LOCAL mag IS SHIP:PARTSTAGGED("magneto")[0]:GETMODULE("DMModuleScienceAnimate").
+  LOCAL mag IS SHIP:PARTSTAGGED("mag")[0]:GETMODULE("DMModuleScienceAnimate").
 
   PRINT "Deploying magnetometer..".
   bay:DoEvent("deploy primary bays").

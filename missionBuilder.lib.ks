@@ -9,7 +9,7 @@ FUNCTION AddInitialMissionStage {
   PARAMETER missionScriptPath.
   AddMissionStage({
     PRINT "Initiating mission..".
-    OverwriteBootFile().
+    OverwriteBootFile(missionScriptPath).
   }).
 }
 
@@ -18,14 +18,14 @@ FUNCTION AddMissionStage {
   _missionStages:ADD({
     stageAction().
     CompleteStage().
-  })
+  }).
 }
 
 FUNCTION AddMissionStageTry {
   PARAMETER stageFunc.
   _missionStages:ADD({
     IF stageFunc() CompleteStage().
-  })
+  }).
 }
 
 FUNCTION AddMissionStageWait {
@@ -34,7 +34,7 @@ FUNCTION AddMissionStageWait {
   _missionStages:ADD({
     IF stageCheck() CompleteStage().
     ELSE WAIT waitTime.
-  })
+  }).
 }
 
 FUNCTION AddFinalMissionStage {
