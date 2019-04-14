@@ -15,7 +15,7 @@ RUN ONCE REQUIRE.
 
 REQUIRE("missions").
 //REQUIRE("nodeExecution").
-REQUIRE("maneuvering2").
+REQUIRE("apsisAdjustment").
 REQUIRE("autoStage").
 REQUIRE("bud").
 

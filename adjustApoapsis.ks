@@ -1,7 +1,7 @@
 @LAZYGLOBAL OFF.
 RUN ONCE REQUIRE.
 
-REQUIRE("maneuvering2").
+REQUIRE("apsisAdjustment").
 
 PARAMETER tApoapsis.
 PARAMETER useRadialThrust IS FALSE.

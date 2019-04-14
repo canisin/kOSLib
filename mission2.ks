@@ -17,7 +17,7 @@ RUN ONCE REQUIRE.
 //plot and burn a maneuver to set periapsis to 25km, stage all, end program
 
 REQUIRE("nodeExecution").
-REQUIRE("maneuvering2").
+REQUIRE("apsisAdjustment").
 REQUIRE("autoStage").
 
 UNTIL FALSE {
