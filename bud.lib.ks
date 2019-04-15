@@ -17,8 +17,8 @@ FUNCTION ISP {
   LOCAL _engines IS LIST().
   LIST ENGINES IN _engines.
   FOR engine IN _engines {
-    SET _isp TO _isp + engine:AVAILABLETHRUST / CONSTANT:G0.
-    SET _fuelFlow TO _fuelFlow + engine:AVAILABLETHRUST / engine:ISP / CONSTANT:G0.
+    SET _isp TO _isp + engine:AVAILABLETHRUST.
+    SET _fuelFlow TO _fuelFlow + engine:AVAILABLETHRUST / engine:ISP.
   }
 
   IF _fuelFlow = 0 RETURN 0.
@@ -31,7 +31,9 @@ FUNCTION SIGMOID {
 
   IF x <= -k RETURN -1.
   IF x >= k RETURN 1.
-  RETURN x / k.
+  //RETURN x / k.
+  LOCAL eX IS CONSTANT:E^(4*x).
+  RETURN (eX - 1) / (eX + 1).
 }
 
 FUNCTION NORMAL {
@@ -48,4 +50,14 @@ FUNCTION RADIAL {
 
 FUNCTION ANTIRADIAL {
   RETURN VXCL(NORMAL:VECTOR, PROGRADE:VECTOR):DIRECTION.
+}
+
+FUNCTION TERNOP {
+  PARAMETER b, t, f.
+  IF b RETURN t.
+  ELSE RETURN f.
+}
+
+FUNCTION AVAILACC {
+  RETURN AVAILABLETHRUST / MASS.
 }
