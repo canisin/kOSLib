@@ -8,7 +8,7 @@ FUNCTION AdjustApoapsis {
 
   PARAMETER tApoapsis.
   PARAMETER useRadialThrust IS FALSE.
-  RETURN AdjustApsis({RETURN APOAPSIS.}, tApoapsis, useRadialThrust).
+  RETURN AdjustApsis(TRUE, tApoapsis, useRadialThrust).
 }
 
 FUNCTION AdjustPeriapsis {
@@ -16,7 +16,7 @@ FUNCTION AdjustPeriapsis {
 
   PARAMETER tPeriapsis.
   PARAMETER useRadialThrust IS FALSE.
-  RETURN AdjustApsis({RETURN PERIAPSIS.}, tPeriapsis, useRadialThrust).
+  RETURN AdjustApsis(FALSE, tPeriapsis, useRadialThrust).
 }
 
 LOCAL FUNCTION AdjustApsis {
@@ -25,28 +25,24 @@ LOCAL FUNCTION AdjustApsis {
     RETURN FALSE.
   }
 
-  PARAMETER apsis.
+  PARAMETER isApoOrPeri.
+  LOCAL LOCK apsis TO TERNOP(isApoOrPeri, APOAPSIS, PERIAPSIS).
   PARAMETER tApsis.
   PARAMETER useRadialThrust IS FALSE.
+  LOCAL isBoost IS tApsis > apsis.
 
   PARAMETER steeringMargin IS 1.
   PARAMETER steeringTimeout IS 20.
 
+  PRINT TERNOP(isBoost, "Boosting", "Lowering") + " " + TERNOP(isApoOrPeri, "apoapsis", "periapsis") + "..".
+
   SET SHIP:CONTROL:PILOTMAINTHROTTLE TO 0.
 
-  IF tApsis >= apsis() {
-    PRINT "Boosting apsis..".
-    LOCK apsisDiff TO tApsis - apsis().
-    IF useRadialThrust LOCK STEERING TO ANTIRADIAL().
-    ELSE LOCK STEERING TO PROGRADE.
-  } ELSE {
-  PRINT "Lowering apsis..".
-    LOCK apsisDiff TO apsis() - tApsis.
-    IF useRadialThrust LOCK STEERING TO RADIAL().
-    ELSE LOCK STEERING TO RETROGRADE.
-  }
-
   PRINT "Turning..".
+  LOCK STEERING TO TERNOP(useRadialThrust,
+    TERNOP(isBoost, ANTIRADIAL(), RADIAL()),
+    TERNOP(isBoost, PROGRADE, RETROGRADE)).
+
   LOCAL abortTime IS TIME + steeringTimeout.
   WAIT UNTIL VANG(FACING:VECTOR, STEERING:VECTOR) <= steeringMargin OR TIME > abortTime.
 
@@ -56,11 +52,15 @@ LOCAL FUNCTION AdjustApsis {
   }
 
   PRINT "Burning..".
-  LOCAL apsisDiffK IS apsisDiff/10.
-  LOCK THROTTLE TO SIGMOID(apsisDiff, apsisDiffK).
+  LOCAL LOCK burnNode TO NODE(0, TERNOP(useRadial, AVAILACC(), 0), 0, TERNOP(useRadial, 0, AVAILACC())).
+  LOCAL LOCK apsisDiff TO TERNOP(isBoost, tApsis - apsis, apsis - tApsis).
+  LOCAL LOCK apsisAcc TO ABS(TERNOP(isApoOrPeri, burnNode:ORBIT:APOAPSIS, burnNode:ORBIT:PERIAPSIS) - apsis).
+  LOCK THROTTLE TO SIGMOID(apsisDiff, 2*apsisAcc).
+
   WAIT UNTIL 
     apsisDiff <= 0
     OR AVAILABLETHRUST = 0.
+
   UNLOCK THROTTLE.
   UNLOCK STEERING.
 
