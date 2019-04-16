@@ -1,20 +1,20 @@
 @LAZYGLOBAL OFF.
 RUN ONCE REQUIRE.
 
-FUNCTION CircularizationNodeApo {
-  RETURN ChangeApsisNodeApo(APOAPSIS).
+FUNCTION CircularizeAtPeriNode {
+  RETURN ChangeApoAtPeriNode(APOAPSIS).
 }
 
-FUNCTION CircularizationNodePeri {
-  RETURN ChangeApsisNodePeri(PERIAPSIS).
+FUNCTION CircularizeAtApoNode {
+  RETURN ChangePeriAtApoNode(PERIAPSIS).
 }
 
-FUNCTION ChangeApsisNodeApo {
+FUNCTION ChangeApoAtPeriNode {
   PARAMETER tApsis.
   RETURN ChangeApsisNode(PERIAPSIS, APOAPSIS, tApsis, ETA:PERIAPSIS).
 }
 
-FUNCTION ChangeApsisNodePeri {
+FUNCTION ChangePeriAtApoNode {
   PARAMETER tApsis.
   RETURN ChangeApsisNode(APOAPSIS, PERIAPSIS, tApsis, ETA:APOAPSIS).
 }

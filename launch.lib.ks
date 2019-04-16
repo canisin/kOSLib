@@ -2,9 +2,9 @@
 RUN ONCE REQUIRE.
 
 REQUIRE("bud").
-REQUIRE("maneuvering").
 REQUIRE("nodeExecution").
 REQUIRE("autoStage").
+REQUIRE("apsisNodes").
 
 FUNCTION Launch {
   PARAMETER tHeading.
@@ -59,6 +59,6 @@ FUNCTION Launch {
     STAGE_TO(circularizationStage).
   }
 
-  CreateCircularizationNodeAtApo().
+  ADD CircularizeAtApoNode().
   ExecuteNode().
 }
