@@ -2,6 +2,7 @@
 RUN ONCE REQUIRE.
 
 REQUIRE("bud").
+REQUIRE("steering").
 
 FUNCTION AdjustApoapsis {
   //todo check next apsis
@@ -31,9 +32,6 @@ LOCAL FUNCTION AdjustApsis {
   PARAMETER useRadialThrust IS FALSE.
   LOCAL isBoost IS tApsis > apsis.
 
-  PARAMETER steeringMargin IS 1.
-  PARAMETER steeringTimeout IS 20.
-
   PRINT TERNOP(isBoost, "Boosting", "Lowering") + " " + TERNOP(isApoOrPeri, "apoapsis", "periapsis") + "..".
 
   SET SHIP:CONTROL:PILOTMAINTHROTTLE TO 0.
@@ -43,10 +41,7 @@ LOCAL FUNCTION AdjustApsis {
     TERNOP(isBoost, ANTIRADIAL(), RADIAL()),
     TERNOP(isBoost, PROGRADE, RETROGRADE)).
 
-  LOCAL abortTime IS TIME + steeringTimeout.
-  WAIT UNTIL VANG(FACING:VECTOR, STEERING:VECTOR) <= steeringMargin OR TIME > abortTime.
-
-  IF TIME > abortTime {
+  IF NOT WAITSTEERING() {
     PRINT "Failed to maneuver to correct direction. Apsis adjustment aborted.".
     UNLOCK STEERING.
     RETURN FALSE.

@@ -1,0 +1,24 @@
+@LAZYGLOBAL OFF.
+RUN ONCE REQUIRE.
+
+REQUIRE("bud").
+
+FUNCTION WAITSTEERING {
+  PARAMETER timeout IS 10.
+  PARAMETER angDiffLimit IS 1.
+  PARAMETER angVelLimit IS 0.1.
+  LOCAL abortTime IS TIME + timeout.
+
+  LOCAL LOCK succ TO VANG(FACING:VECTOR, GETVEC(STEERING)) < angDiffLimit
+                 AND ANGULARVEL:MAG < angVelLimit.
+
+  WAIT UNTIL succ OR TIME:SECONDS >= abortTime:SECONDS.
+  RETURN succ.
+}
+
+FUNCTION NOROT {
+  PARAMETER tar.
+  SET tar TO GETVEC(tar).
+
+  RETURN LOOKDIRUP(tar, FACING:UPVECTOR).
+}

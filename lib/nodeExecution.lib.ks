@@ -2,6 +2,7 @@
 RUN ONCE REQUIRE.
 
 REQUIRE("bud").
+REQUIRE("steering").
 
 FUNCTION ExecuteNode {
   IF NOT HASNODE {
@@ -15,10 +16,8 @@ FUNCTION ExecuteNode {
   }
 
   PARAMETER turnTime IS 10.
-  PARAMETER abortTime IS 10.
-  PARAMETER facingMarginBegin IS 1.
-  PARAMETER deltaVMarginEnd IS 0.1.
-  PARAMETER facingMarginEnd IS 10.
+  PARAMETER deltaVMargin IS 0.1.
+  PARAMETER facingDeviation IS 10.
 
   SET SHIP:CONTROL:PILOTMAINTHROTTLE TO 0.
   PRINT "Begin node execution..".
@@ -31,9 +30,7 @@ FUNCTION ExecuteNode {
 
   PRINT "Maneuvering to node direction..".
   LOCK STEERING TO NEXTNODE:DELTAV.
-  WAIT UNTIL VANG(FACING:VECTOR, NEXTNODE:DELTAV) <= facingMarginBegin OR NEXTNODE:ETA <= -abortTime.
-
-  IF NEXTNODE:ETA <= -abortTime {
+  IF NOT WAITSTEERING() {
     PRINT "Failed to maneuver to node direction. Node execution aborted.".
     UNLOCK STEERING.
     RETURN FALSE.
@@ -45,8 +42,8 @@ FUNCTION ExecuteNode {
   PRINT "Burning..".
   LOCK THROTTLE TO SIGMOID(NEXTNODE:DELTAV:MAG, 2*AVAILACC()).
   WAIT UNTIL 
-    NEXTNODE:DELTAV:MAG <= deltaVMarginEnd 
-    OR VANG(FACING:VECTOR, NEXTNODE:DELTAV) >= facingMarginEnd
+    NEXTNODE:DELTAV:MAG <= deltaVMargin 
+    OR VANG(FACING:VECTOR, NEXTNODE:DELTAV) >= facingDeviation
     OR AVAILABLETHRUST = 0.
   UNLOCK THROTTLE.
   UNLOCK STEERING.
