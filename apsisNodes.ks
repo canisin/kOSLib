@@ -29,5 +29,5 @@ FUNCTION ChangeApsisNode {
 
   LOCAL deltaV IS SQRT(BODY:MU * (2/apsisBurn - 2/(apsisBurn + apsisTarg)))
                 - SQRT(BODY:MU * (2/apsisBurn - 2/(apsisBurn + apsisCurr))).
-  RETURN NODE(t, 0, 0, deltaV).
+  RETURN NODE(t:SECONDS, 0, 0, deltaV).
 }

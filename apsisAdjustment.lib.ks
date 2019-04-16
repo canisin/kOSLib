@@ -48,11 +48,12 @@ LOCAL FUNCTION AdjustApsis {
 
   IF TIME > abortTime {
     PRINT "Failed to maneuver to correct direction. Apsis adjustment aborted.".
+    UNLOCK STEERING.
     RETURN FALSE.
   }
 
   PRINT "Burning..".
-  LOCAL LOCK burnNode TO NODE(0, TERNOP(useRadial, AVAILACC(), 0), 0, TERNOP(useRadial, 0, AVAILACC())).
+  LOCAL LOCK burnNode TO NODE(TIME:SECONDS, TERNOP(useRadial, AVAILACC(), 0), 0, TERNOP(useRadial, 0, AVAILACC())).
   LOCAL LOCK apsisDiff TO TERNOP(isBoost, tApsis - apsis, apsis - tApsis).
   LOCAL LOCK apsisAcc TO ABS(TERNOP(isApoOrPeri, burnNode:ORBIT:APOAPSIS, burnNode:ORBIT:PERIAPSIS) - apsis).
   LOCK THROTTLE TO SIGMOID(apsisDiff, 2*apsisAcc).

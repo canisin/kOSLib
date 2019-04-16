@@ -35,6 +35,7 @@ FUNCTION ExecuteNode {
 
   IF NEXTNODE:ETA <= -abortTime {
     PRINT "Failed to maneuver to node direction. Node execution aborted.".
+    UNLOCK STEERING.
     RETURN FALSE.
   }
 
