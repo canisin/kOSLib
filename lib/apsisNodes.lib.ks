@@ -1,33 +1,35 @@
 @LAZYGLOBAL OFF.
 RUN ONCE REQUIRE.
 
+REQUIRE("bud").
+
 FUNCTION CircularizeAtPeriNode {
-  RETURN ChangeApoAtPeriNode(APOAPSIS).
+  RETURN ChangeApoNode(PERIAPSIS).
 }
 
 FUNCTION CircularizeAtApoNode {
-  RETURN ChangePeriAtApoNode(PERIAPSIS).
+  RETURN ChangePeriNode(APOAPSIS).
 }
 
-FUNCTION ChangeApoAtPeriNode {
+FUNCTION ChangeApoNode {
   PARAMETER tApsis.
-  RETURN ChangeApsisNode(PERIAPSIS, APOAPSIS, tApsis, ETA:PERIAPSIS).
+  RETURN ChangeApsisNode(FALSE, tApsis).
 }
 
-FUNCTION ChangePeriAtApoNode {
+FUNCTION ChangePeriNode {
   PARAMETER tApsis.
-  RETURN ChangeApsisNode(APOAPSIS, PERIAPSIS, tApsis, ETA:APOAPSIS).
+  RETURN ChangeApsisNode(TRUE, tApsis).
 }
 
-FUNCTION ChangeApsisNode {
-  PARAMETER apsisBurn, apsisCurr, apsisTarg, t.
+LOCAL FUNCTION ChangeApsisNode {
+  PARAMETER periOrApo, targApsis.
 
-  SET apsisBurn TO apsisBurn + BODY:RADIUS.
-  SET apsisBurn TO apsisCurr + BODY:RADIUS.
-  SET apsisBurn TO apsisTarg + BODY:RADIUS.
-  SET t TO TIME + t.
+  LOCAL rBurn IS TERNOP(periOrApo, APOAPSIS, PERIAPSIS) + BODY:RADIUS.
+  LOCAL rCurr IS TERNOP(periOrApo, PERIAPSIS, APOAPSIS) + BODY:RADIUS.
+  LOCAL rTarg IS targApsis + BODY:RADIUS.
+  LOCAL tBurn IS TIME + TERNOP(periOrApo, ETA:APOAPSIS, ETA:PERIAPSIS).
 
-  LOCAL deltaV IS SQRT(BODY:MU * (2/apsisBurn - 2/(apsisBurn + apsisTarg)))
-                - SQRT(BODY:MU * (2/apsisBurn - 2/(apsisBurn + apsisCurr))).
-  RETURN NODE(t:SECONDS, 0, 0, deltaV).
+  LOCAL deltaV IS SQRT(BODY:MU * (2/rBurn - 2/(rBurn + rTarg)))
+                - SQRT(BODY:MU * (2/rBurn - 2/(rBurn + rCurr))).
+  RETURN NODE(tBurn:SECONDS, 0, 0, deltaV).
 }
