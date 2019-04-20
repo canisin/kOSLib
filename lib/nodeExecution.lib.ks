@@ -29,7 +29,7 @@ FUNCTION ExecuteNode {
   WAIT UNTIL NEXTNODE:ETA <= _burnTime/2 + turnTime.
 
   PRINT "Maneuvering to node direction..".
-  LOCK STEERING TO NEXTNODE:DELTAV.
+  LOCK STEERING TO NOROT(NEXTNODE:DELTAV).
   IF NOT WAITSTEERING() {
     PRINT "Failed to maneuver to node direction. Node execution aborted.".
     UNLOCK STEERING.

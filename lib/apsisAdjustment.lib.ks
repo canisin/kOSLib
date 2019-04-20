@@ -37,9 +37,9 @@ LOCAL FUNCTION AdjustApsis {
   SET SHIP:CONTROL:PILOTMAINTHROTTLE TO 0.
 
   PRINT "Turning..".
-  LOCK STEERING TO TERNOP(useRadialThrust,
+  LOCK STEERING TO NOROT(TERNOP(useRadialThrust,
     TERNOP(isBoost, ANTIRADIAL(), RADIAL()),
-    TERNOP(isBoost, PROGRADE, RETROGRADE)).
+    TERNOP(isBoost, PROGRADE, RETROGRADE))).
 
   IF NOT WAITSTEERING() {
     PRINT "Failed to maneuver to correct direction. Apsis adjustment aborted.".

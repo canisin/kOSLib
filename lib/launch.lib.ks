@@ -2,9 +2,10 @@
 RUN ONCE REQUIRE.
 
 REQUIRE("bud").
-REQUIRE("nodeExecution").
 REQUIRE("autoStage").
+REQUIRE("apsisAdjustment").
 REQUIRE("apsisNodes").
+REQUIRE("nodeExecution").
 
 FUNCTION Launch {
   PARAMETER tHeading.
@@ -45,20 +46,16 @@ FUNCTION Launch {
   WAIT UNTIL ALTITUDE > BODY:ATM:HEIGHT.
 
   PRINT "Reboosting apoapsis..".
-  LOCAL apoBoostK IS (tApoapsis - APOAPSIS)/10.
-  LOCK THROTTLE TO SIGMOID(tApoapsis - APOAPSIS, apoBoostK).
-  WAIT UNTIL APOAPSIS >= tApoapsis.
-
-  WAIT 1.
-  UNLOCK THROTTLE.
   UNLOCK STEERING.
-  AUTOSTAGE_OFF().
+  AdjustApoapsis(tApoapsis).
 
+  AUTOSTAGE_OFF().
   IF circularizationStage <> -1 {
     PRINT "Dropping boosters..".
     STAGE_TO(circularizationStage).
   }
 
+  PRINT "Executing circularization burn..".
   ADD CircularizeAtApoNode().
   ExecuteNode().
 }
