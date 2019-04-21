@@ -4,7 +4,7 @@ RUN ONCE REQUIRE.
 REQUIRE("bud").
 
 FUNCTION WAITSTEERING {
-  PARAMETER timeout IS 10.
+  PARAMETER timeout IS 25.
   PARAMETER angDiffLimit IS 1.
   PARAMETER angVelLimit IS 0.1.
   LOCAL abortTime IS TIME + timeout.

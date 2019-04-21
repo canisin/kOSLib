@@ -15,7 +15,7 @@ FUNCTION ExecuteNode {
     RETURN FALSE.
   }
 
-  PARAMETER turnTime IS 10.
+  PARAMETER turnTime IS 25.
   PARAMETER deltaVMargin IS 0.1.
   PARAMETER facingDeviation IS 10.
 
@@ -30,7 +30,7 @@ FUNCTION ExecuteNode {
 
   PRINT "Maneuvering to node direction..".
   LOCK STEERING TO NOROT(NEXTNODE:DELTAV).
-  IF NOT WAITSTEERING() {
+  IF NOT WAITSTEERING(turnTime) {
     PRINT "Failed to maneuver to node direction. Node execution aborted.".
     UNLOCK STEERING.
     RETURN FALSE.
