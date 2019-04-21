@@ -3,6 +3,7 @@ RUN ONCE REQUIRE.
 
 REQUIRE("bud").
 REQUIRE("steering").
+REQUIRE("burnTime").
 
 FUNCTION ExecuteNode {
   IF NOT HASNODE {
@@ -56,22 +57,4 @@ FUNCTION ExecuteNode {
   PRINT "Node execution complete.".
   REMOVE NEXTNODE.
   RETURN TRUE.
-}
-
-LOCAL FUNCTION BurnTime {
-  PARAMETER deltaV.
-  RETURN AdvBurnTime(deltaV).
-}
-
-LOCAL FUNCTION SimpleBurnTime {
-  PARAMETER deltaV.
-
-  RETURN deltaV * MASS / AVAILABLETHRUST.
-}
-
-LOCAL FUNCTION AdvBurnTime {
-  PARAMETER deltaV.
-
-  LOCAL ispG0 IS ISP() * CONSTANT:G0.
-  RETURN MASS * ispG0 * (1 - CONSTANT:E ^ (-deltaV / ispG0)) / AVAILABLETHRUST.
 }
