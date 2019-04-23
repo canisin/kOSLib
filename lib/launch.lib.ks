@@ -30,15 +30,15 @@ FUNCTION Launch {
   WAIT UNTIL SHIP:SOLIDFUEL <= solidfuelIgnore AND ALTITUDE >= minPitchAltitude.
 
   PRINT "Initiating pitch over to " + pitchOverTarget + " degrees with " + pitchOverLead + " degrees lead..".
-  LOCK STEERING TO HEADING(tHeading, PITCH(SRFPROGRADE) - pitchOverLead).
-  WAIT UNTIL PITCH(SRFPROGRADE) <= pitchOverTarget.
+  LOCK STEERING TO HEADING(tHeading, VPITCH(SRFPROGRADE) - pitchOverLead).
+  WAIT UNTIL VPITCH(SRFPROGRADE) <= pitchOverTarget.
 
   PRINT "Following surface prograde until " + orbProgradeThreshold + " meters..".
-  LOCK STEERING TO HEADING(tHeading, PITCH(SRFPROGRADE)).
+  LOCK STEERING TO HEADING(tHeading, VPITCH(SRFPROGRADE)).
   WAIT UNTIL ALTITUDE >= orbProgradeThreshold.
 
   PRINT "Switching to orbital prograde and burnining for apoapsis..".
-  LOCK STEERING TO HEADING(tHeading, PITCH(PROGRADE)).
+  LOCK STEERING TO HEADING(tHeading, VPITCH(PROGRADE)).
   WAIT UNTIL APOAPSIS > tApoapsis.
 
   PRINT "Coasting to the edge of space..".
