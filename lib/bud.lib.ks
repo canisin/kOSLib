@@ -22,9 +22,12 @@ FUNCTION ISP {
 
   LOCAL _engines IS LIST().
   LIST ENGINES IN _engines.
+
   FOR engine IN _engines {
-    SET _isp TO _isp + engine:AVAILABLETHRUST.
-    SET _fuelFlow TO _fuelFlow + engine:AVAILABLETHRUST / engine:ISP.
+    IF engine:AVAILABLETHRUST > 0 {
+      SET _isp TO _isp + engine:AVAILABLETHRUST.
+      SET _fuelFlow TO _fuelFlow + engine:AVAILABLETHRUST / engine:ISP.
+    }
   }
 
   IF _fuelFlow = 0 RETURN 0.
@@ -37,9 +40,11 @@ FUNCTION SIGMOID {
 
   IF x <= -k RETURN -1.
   IF x >= k RETURN 1.
-  //RETURN x / k.
-  LOCAL eX IS CONSTANT:E^(4*x).
-  RETURN (eX - 1) / (eX + 1).
+  IF x <= k/20 AND x > 0 RETURN .05.
+  IF x >= -k/20 AND x < 0 RETURN -.05.
+  RETURN x / k.
+//  LOCAL eX IS CONSTANT:E^(4*x).
+//  RETURN (eX - 1) / (eX + 1).
 }
 
 FUNCTION NORMAL {

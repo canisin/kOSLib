@@ -44,10 +44,33 @@ FUNCTION Launch {
   PRINT "Coasting to the edge of space..".
   UNLOCK THROTTLE.
   WAIT UNTIL ALTITUDE > BODY:ATM:HEIGHT.
-
-  PRINT "Reboosting apoapsis..".
   UNLOCK STEERING.
-  AdjustApoapsis(tApoapsis).
+
+  IF APOAPSIS < tApoapsis {
+    PRINT "Reboosting apoapsis..".
+    AdjustApoapsis(tApoapsis).
+  }
+
+  ADD CircularizeAtApoNode().
+  IF NEXTNODE:DELTAV:MAG > 100 {
+    PRINT "Executing circularization burn pt1..".
+    SET NEXTNODE:PROGRADE TO NEXTNODE:PROGRADE - 100.
+    ExecuteNode().
+
+    PRINT "Pushing out apoapsis..".
+    LOCK STEERING TO ANTIRADIAL().
+    WAIT 5.
+    LOCK THROTTLE TO 1.
+    WAIT UNTIL TERNOP(ETA:APOAPSIS > ORBIT:PERIOD / 2, ETA:APOAPSIS - ORBIT:PERIOD, ETA:APOAPSIS) > 30.
+    UNLOCK THROTTLE.
+    UNLOCK STEERING.
+
+    PRINT "Re-reboosting apoapsis..".
+    IF APOAPSIS < tApoapsis {
+      PRINT "Reboosting apoapsis..".
+      AdjustApoapsis(tApoapsis, TRUE).
+    }
+  } ELSE REMOVE NEXTNODE.
 
   AUTOSTAGE_OFF().
   IF circularizationStage <> -1 {

@@ -15,9 +15,16 @@ WHEN _autoStageTrigger() THEN {
   RETURN TRUE.
 }
 
+GLOBAL _lastAvailableThrust IS 0.
 FUNCTION AUTOSTAGE_ON {
   SET _lastAutoStage TO TIME.
-  SET _autoStageTrigger TO {RETURN AVAILABLETHRUST = 0.}.
+  SET _lastAvailableThrust TO AVAILABLETHRUST.
+  SET _autoStageTrigger TO {
+    LOCAL trigger IS AVAILABLETHRUST = 0
+                 OR AVAILABLETHRUST < _lastAvailableThrust / 2.
+    SET _lastAvailableThrust TO AVAILABLETHRUST.
+    RETURN trigger.
+  }.
   PRINT "AutoStage ON.".
 }
 

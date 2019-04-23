@@ -1,0 +1,51 @@
+@LAZYGLOBAL OFF.
+RUN ONCE REQUIRE.
+
+REQUIRE("bud").
+REQUIRE("steering").
+
+FUNCTION LandVerticalSuicide {
+  IF AVAILABLETHRUST = 0 {
+    PRINT "No thrust available. Landing aborted.".
+    RETURN FALSE.
+  }
+
+  SET SHIP:CONTROL:PILOTMAINTHROTTLE TO 0.
+
+  PRINT "Killing horizontal velocity..".
+  LOCK STEERING TO NOROT(-VXCL(UP:VECTOR, SRFPROGRADE:VECTOR)).
+  WAITSTEERING(10).
+  LOCK THROTTLE TO SIGMOID(GROUNDSPEED-5, 10*AVAILACC()).
+  WAIT UNTIL GROUNDSPEED < 5.
+  UNLOCK THROTTLE.
+  
+  PRINT "Pointing upwards..".
+  LOCK STEERING TO HEADING(VHEADING(SRFRETROGRADE),
+                         MAX(VPITCH(SRFRETROGRADE), 75)).
+  
+  PRINT "Awaiting suicide burn..".
+  LOCK burnAcc TO AVAILACC() - BODY:MU/BODY:RADIUS^2.
+  LOCK burnHeight TO VERTICALSPEED^2 / (2*burnAcc).
+  WAIT UNTIL ALT:RADAR <= burnHeight + 250.
+  
+  PRINT "Suicide burn!".
+  LOCK THROTTLE TO SIGMOID(-VERTICALSPEED-10, AVAILACC()/2).
+  GEAR ON.
+  
+  PRINT "Awaiting 100m..".
+  WAIT UNTIL ALT:RADAR < 100.
+  
+  PRINT "Locking vertical speed to 5m/s..".
+  LOCK THROTTLE TO SIGMOID(-VERTICALSPEED-5, AVAILACC()/2).
+  
+  PRINT "Awaiting 20m..".
+  WAIT UNTIL ALT:RADAR < 20.
+  
+  PRINT "Locking vertical speed to 2m/s..".
+  LOCK THROTTLE TO SIGMOID(-VERTICALSPEED-2, AVAILACC()/2).
+  WAIT UNTIL STATUS = "LANDED" OR STATUS = "SPLASHED".
+  
+  PRINT "Landed.".
+  UNLOCK THROTTLE.
+  UNLOCK STEERING.
+}

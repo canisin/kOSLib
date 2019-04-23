@@ -29,7 +29,7 @@ LOCAL FUNCTION AdjustApsis {
   PARAMETER isApoOrPeri.
   LOCAL LOCK apsis TO TERNOP(isApoOrPeri, APOAPSIS, PERIAPSIS).
   PARAMETER tApsis.
-  PARAMETER useRadialThrust IS FALSE.
+  PARAMETER useRadial IS FALSE.
   LOCAL isBoost IS tApsis > apsis.
 
   PRINT TERNOP(isBoost, "Boosting", "Lowering") + " " + TERNOP(isApoOrPeri, "apoapsis", "periapsis") + "..".
@@ -37,7 +37,7 @@ LOCAL FUNCTION AdjustApsis {
   SET SHIP:CONTROL:PILOTMAINTHROTTLE TO 0.
 
   PRINT "Turning..".
-  LOCK STEERING TO NOROT(TERNOP(useRadialThrust,
+  LOCK STEERING TO NOROT(TERNOP(useRadial,
     TERNOP(isBoost, ANTIRADIAL(), RADIAL()),
     TERNOP(isBoost, PROGRADE, RETROGRADE))).
 
@@ -48,10 +48,10 @@ LOCAL FUNCTION AdjustApsis {
   }
 
   PRINT "Burning..".
-  LOCAL LOCK burnNode TO NODE(TIME:SECONDS, TERNOP(useRadial, AVAILACC(), 0), 0, TERNOP(useRadial, 0, AVAILACC())).
   LOCAL LOCK apsisDiff TO TERNOP(isBoost, tApsis - apsis, apsis - tApsis).
-  LOCAL LOCK apsisAcc TO ABS(TERNOP(isApoOrPeri, burnNode:ORBIT:APOAPSIS, burnNode:ORBIT:PERIAPSIS) - apsis).
-  LOCK THROTTLE TO SIGMOID(apsisDiff, 2*apsisAcc).
+//  LOCAL LOCK burnNode TO NODE(TIME:SECONDS, TERNOP(useRadial, AVAILACC(), 0), 0, TERNOP(useRadial, 0, AVAILACC())).
+//  LOCAL LOCK apsisAcc TO ABS(TERNOP(isApoOrPeri, burnNode:ORBIT:APOAPSIS, burnNode:ORBIT:PERIAPSIS) - apsis).
+  LOCK THROTTLE TO SIGMOID(apsisDiff, tApsis * .01).
 
   WAIT UNTIL 
     apsisDiff <= 0
