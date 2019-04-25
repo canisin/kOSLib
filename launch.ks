@@ -6,6 +6,6 @@ REQUIRE("launch").
 PARAMETER tHeading.
 PARAMETER tApoapsis.
 
-PARAMETER circularizationStage IS -1.
-
-Launch(tHeading, tApoapsis, circularizationStage).
+SET _launchParameters["heading"] TO tHeading.
+SET _launchParameters["apoapsis"] TO tApoapsis.
+Launch().
