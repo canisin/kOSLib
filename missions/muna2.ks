@@ -9,13 +9,20 @@ REQUIRE("apsisNodes").
 
 AddInitialMissionStage(SCRIPTPATH()).
 AddMissionStage({
+  SET _launchParams["heading"] TO 90.
+  SET _launchParams["apoapsis"] TO 100_000.
+  SET _launchParams["circularizationStage"] TO 1.
+  
+  SET _launchParams["firstPitchAlt"] TO 500.
+  SET _launchParams["firstPitchValue"] TO 70.
+  
   PRINT("Launching..").
-  Launch(90, 100_000, 1, 
-        4000, 500, 5, 70).
+  Launch().
 }).
 AddMissionStage({
   PRINT "Deploying antennas..".
   TOGGLE BRAKES.
+  TOGGLE RCS.
 }).
 AddMissionStage({
   PRINT "Plotting maneuver..".
@@ -27,11 +34,10 @@ AddMissionStage({
   FOR i IN RANGE(0, 360) {
     SET NEXTNODE:ETA TO NEXTNODE:ETA + ORBIT:PERIOD/360.
     IF NEXTNODE:ORBIT:HASNEXTPATCH AND NEXTNODE:ORBIT:NEXTPATCH:BODY = MUN 
-      AND NEXTNODE:ORBIT:NEXTPATCH:PERIAPSIS > MUN:RADIUS {
-      IF NEXTNODE:ORBIT:NEXTPATCH:PERIAPSIS < minPeri {
-        SET minPeri TO NEXTNODE:ORBIT:NEXTPATCH:PERIAPSIS.
-        SET minTime TO TIME + NEXTNODE:ETA.
-      }
+        AND NEXTNODE:ORBIT:NEXTPATCH:PERIAPSIS > MUN:RADIUS
+        AND NEXTNODE:ORBIT:NEXTPATCH:PERIAPSIS < minPeri {
+      SET minPeri TO NEXTNODE:ORBIT:NEXTPATCH:PERIAPSIS.
+      SET minTime TO TIME + NEXTNODE:ETA.
     }
     WAIT .1.
   }
@@ -57,11 +63,11 @@ AddMissionStage({
 }).
 AddMissionStage({
   PRINT "Conducting experiments..".
-  TOGGLE RCS.
+  //TOGGLE RCS.
   WAIT 2.
   TOGGLE LIGHTS.
   WAIT 20.
-  TOGGLE RCS.
+  //TOGGLE RCS.
   WAIT 2.
 }).
 AddMissionStage({
@@ -74,12 +80,12 @@ AddMissionStage({
   WAIT UNTIL ALTITUDE > 500.
 
   PRINT "Tipping over..".
-  LOCK STEERING TO HEADING(90, VPITCH(SRFPROGRADE) - 10).
-  WAIT UNTIL VPITCH(SRFPROGRADE) < 50.
+  LOCK STEERING TO HEADING(90, VPITCH(SRFPROGRADE) - 20).
+  WAIT UNTIL VPITCH(SRFPROGRADE) < 30.
 
   PRINT "Holding pitch..".
-  LOCK STEERING TO HEADING(90, 45).
-  WAIT UNTIL APOAPSIS > 10_000.
+  LOCK STEERING TO HEADING(90, 30).
+  WAIT UNTIL APOAPSIS > 15_000.
 
   PRINT "Apoapsis achieved.".
   UNLOCK THROTTLE.
@@ -91,12 +97,13 @@ AddMissionStage({
 AddMissionStage({
   PRINT "Plotting maneuver..".
   MAPVIEW ON.
-  ADD NODE((TIME + 5*60):SECONDS, 0, 0, 350).
+  ADD NODE((TIME + 5*60):SECONDS, 0, 0, 310).
   LOCAL minPeri IS 12_000_000.
   LOCAL minTime IS TIME.
   FOR i IN RANGE(0, 360) {
     SET NEXTNODE:ETA TO NEXTNODE:ETA + ORBIT:PERIOD/360.
-    IF NEXTNODE:ORBIT:NEXTPATCH:PERIAPSIS < minPeri {
+    IF NEXTNODE:ORBIT:NEXTPATCH:PERIAPSIS > 25_000
+        AND NEXTNODE:ORBIT:NEXTPATCH:PERIAPSIS < minPeri {
       SET minPeri TO NEXTNODE:ORBIT:NEXTPATCH:PERIAPSIS.
       SET minTime TO TIME + NEXTNODE:ETA.
     }
@@ -111,26 +118,29 @@ AddMissionStageWait({
   PRINT "Awaiting munar escape..".
   RETURN BODY <> MUN.
 }, 100).
+AddMissionStageWait({
+  PRINT "Awaiting apoapsis..".
+  RETURN ETAAPOAPSIS_CLAMPED() < 0.
+}, 100).
 AddMissionStage({
   PRINT "Adjusting reentry depth..".
   AdjustPeriapsis(30_000).
 }).
 AddMissionStageWait({
   PRINT "Awaiting reentry..".
-  RETURN ALTITUDE <= 250_000.
+  RETURN ALTITUDE <= 500_000.
 }, 100).
 AddMissionStageWait({
   PRINT "Reentry imminent..".
-  RETURN ALTITUDE <= 90_000.
+  RETURN ALTITUDE <= 100_000.
 }, 5).
 AddMissionStage({
   PRINT "Preparing for reentry..".
   PrepReentry().
-}).
-AddMissionStageWait({
+
   PRINT "Awaiting landing..".
-  RETURN STATUS = "LANDED" OR STATUS = "SPLASHED".
-}, 0).
+  WAIT UNTIL STATUS = "LANDED" OR STATUS = "SPLASHED".
+}).
 AddMissionStage({
   UNLOCK STEERING.
 }).
@@ -141,6 +151,7 @@ LOCAL FUNCTION PrepReentry
 {
   PRINT "Packing antennas.".
   TOGGLE BRAKES.
+  TOGGLE RCS.
 
   PRINT "Locking to normal for staging..".
   LOCK STEERING TO NORMAL().
