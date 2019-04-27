@@ -4,8 +4,12 @@ RUN ONCE REQUIRE.
 FUNCTION OverwriteBootFile {
   PARAMETER missionPath.
 
-  IF EXISTS("boot/boot.ks")
-    MOVEPATH("boot/boot.ks", "boot/boot.bak").
+  IF EXISTS("boot/boot.ks") {
+    IF EXISTS("boot/boot.bak")
+      DELETEPATH("boot/boot.ks").
+    ELSE
+      MOVEPATH("boot/boot.ks", "boot/boot.bak").
+  }
 
   LOCAL boot IS CREATE("boot/boot.ks").
   boot:WRITELN("@LAZYGLOBAL OFF.").

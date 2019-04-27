@@ -32,7 +32,10 @@ FUNCTION AddMissionStageWait {
   PARAMETER stageCheck.
   PARAMETER waitTime.
   _missionStages:ADD({
-    IF stageCheck() CompleteStage().
+    IF stageCheck() {
+      KUNIVERSE:TIMEWARP:CANCELWARP().
+      CompleteStage().
+    }
     ELSE WAIT waitTime.
   }).
 }
