@@ -7,78 +7,150 @@ REQUIRE("apsisAdjustment").
 REQUIRE("apsisNodes").
 REQUIRE("nodeExecution").
 
+GLOBAL _launchParams IS LEXICON().
+
+SET _launchParams["heading"] TO 90.
+SET _launchParams["apoapsis"] TO 100_000.
+
+SET _launchParams["circularizationStage"] TO -1.
+
+SET _launchParams["firstPitchAlt"] TO 500.
+SET _launchParams["firstPitchValue"] TO 85.
+SET _launchParams["firstPitchLead"] TO 5.
+
+SET _launchParams["secondPitchAlt"] TO 0.
+SET _launchParams["secondPitchValue"] TO 0.
+SET _launchParams["secondPitchLead"] TO 0.
+
+SET _launchParams["orbitalProgradeAlt"] TO 30_000.
+SET _launchParams["boosterDropMargin"] TO 100.
+SET _launchParams["apoapsisPush"] TO 30.
+
+LOCAL LOCK _heading TO _launchParams["heading"].
+
 FUNCTION Launch {
-  PARAMETER tHeading.
-  PARAMETER tApoapsis.
+  InitiateLaunch().
+  PitchOverOne().
+  PitchOverTwo().
+  BoostApoapsis().
+  CoastToSpace().
+  ReboostApoapsis().
+  AlmostCircularize().
+  DropBoosters().
+  Circularize().
+}
 
-  PARAMETER circularizationStage IS -1.
-
-  PARAMETER solidfuelIgnore IS 0.
-  PARAMETER minPitchAltitude IS 500.
-  PARAMETER pitchOverLead IS 5.
-  PARAMETER pitchOverTarget IS 85.
-  PARAMETER orbProgradeThreshold IS 30000.
-
+LOCAL FUNCTION InitiateLaunch {
+  PRINT "Counting down to launch..".
   SET SHIP:CONTROL:PILOTMAINTHROTTLE TO 0.
 
   LOCK THROTTLE TO 1.0.
-  LOCK STEERING TO HEADING(tHeading, 90).
+  LOCK STEERING TO HEADING(_heading, 90).
 
   AUTOSTAGE_ON().
+}
 
-  PRINT "Burning solid fuel stages and ascending to at least " + minPitchAltitude + " meters..".
-  WAIT UNTIL SHIP:SOLIDFUEL <= solidfuelIgnore AND ALTITUDE >= minPitchAltitude.
+LOCAL FUNCTION PitchOverOne {
+  PitchOverImpl(_launchParams["firstPitchAlt"],
+                _launchParams["firstPitchValue"],
+                _launchParams["firstPitchLead"]).
+}
 
-  PRINT "Initiating pitch over to " + pitchOverTarget + " degrees with " + pitchOverLead + " degrees lead..".
-  LOCK STEERING TO HEADING(tHeading, VPITCH(SRFPROGRADE) - pitchOverLead).
-  WAIT UNTIL VPITCH(SRFPROGRADE) <= pitchOverTarget.
+LOCAL FUNCTION PitchOverTwo {
+  PitchOverImpl(_launchParams["secondPitchAlt"],
+                _launchParams["secondPitchValue"],
+                _launchParams["secondPitchLead"]).
+}
 
-  PRINT "Following surface prograde until " + orbProgradeThreshold + " meters..".
-  LOCK STEERING TO HEADING(tHeading, VPITCH(SRFPROGRADE)).
-  WAIT UNTIL ALTITUDE >= orbProgradeThreshold.
+LOCAL FUNCTION PitchOverImpl {
+  PARAMETER tAltitude, tPitch, lead.
+  LOCAL LOCK cPitch TO VPITCH(TERNOP(
+    ALTITUDE < _launchParams["orbitalProgradeAlt"],
+    SRFPROGRADE, PROGRADE)).
 
-  PRINT "Switching to orbital prograde and burnining for apoapsis..".
-  LOCK STEERING TO HEADING(tHeading, VPITCH(PROGRADE)).
-  WAIT UNTIL APOAPSIS > tApoapsis.
+  IF tAltitude = 0 RETURN.
 
+  PRINT "Ascending to " + tAltitude + " meters..".
+  WAIT UNTIL ALTITUDE >= tAltitude.
+
+  PRINT "Initiating pitch over to " + tPitch + " degrees with " + lead + " degrees lead..".
+  LOCK STEERING TO HEADING(_heading, cPitch - lead*SIGMOID(cPitch - tPitch, lead)).
+  WAIT UNTIL cPitch <= tPitch.
+
+  PRINT "Pitch over complete.".
+  LOCK STEERING TO HEADING(_heading, cPitch).
+}
+
+LOCAL FUNCTION BoostApoapsis {
+  LOCAL tApoapsis IS _launchParams["apoapsis"].
+  LOCAL orbitalPrograde IS _launchParams["orbitalProgradeAlt"].
+
+  PRINT "Ascending to orbital prograde switch altitude of " + orbitalPrograde + " meters..".
+  WAIT UNTIL ALTITUDE >= orbitalPrograde.
+
+  IF APOAPSIS >= tApoapsis RETURN.
+
+  PRINT "Awaiting target apoapsis of " + tApoapsis + " meters..".
+  AdjustApoapsis(tApoapsis).
+  LOCK STEERING TO PROGRADE.
+}
+
+LOCAL FUNCTION CoastToSpace {
   PRINT "Coasting to the edge of space..".
-  UNLOCK THROTTLE.
   WAIT UNTIL ALTITUDE > BODY:ATM:HEIGHT.
   UNLOCK STEERING.
+}
 
-  IF APOAPSIS < tApoapsis {
-    PRINT "Reboosting apoapsis..".
-    AdjustApoapsis(tApoapsis).
-  }
+LOCAL FUNCTION ReboostApoapsis {
+  LOCAL tApoapsis IS _launchParams["apoapsis"].
+  IF APOAPSIS >= tApoapsis RETURN.
+
+  PRINT "Reboosting apoapsis..".
+  AdjustApoapsis(tApoapsis).
+}
+
+LOCAL FUNCTION AlmostCircularize {
+  LOCAL boosterDropMargin IS _launchParams["boosterDropMargin"].
 
   ADD CircularizeAtApoNode().
-  IF NEXTNODE:DELTAV:MAG > 100 {
-    PRINT "Executing circularization burn pt1..".
-    SET NEXTNODE:PROGRADE TO NEXTNODE:PROGRADE - 100.
-    ExecuteNode().
-
-    PRINT "Pushing out apoapsis..".
-    LOCK STEERING TO ANTIRADIAL().
-    WAIT 5.
-    LOCK THROTTLE TO 1.
-    WAIT UNTIL TERNOP(ETA:APOAPSIS > ORBIT:PERIOD / 2, ETA:APOAPSIS - ORBIT:PERIOD, ETA:APOAPSIS) > 30.
-    UNLOCK THROTTLE.
-    UNLOCK STEERING.
-
-    PRINT "Re-reboosting apoapsis..".
-    IF APOAPSIS < tApoapsis {
-      PRINT "Reboosting apoapsis..".
-      AdjustApoapsis(tApoapsis, TRUE).
-    }
-  } ELSE REMOVE NEXTNODE.
-
-  AUTOSTAGE_OFF().
-  IF circularizationStage <> -1 {
-    PRINT "Dropping boosters..".
-    STAGE_TO(circularizationStage).
+  IF NEXTNODE:DELTAV:MAG <= boosterDropMargin {
+    REMOVE NEXTNODE.
+    RETURN.
   }
 
   PRINT "Executing circularization burn..".
+  SET NEXTNODE:PROGRADE TO NEXTNODE:PROGRADE - boosterDropMargin.
+  ExecuteNode().
+
+  PushOutApo().
+  ReboostApoapsis().
+}
+
+LOCAL FUNCTION PushOutApo {
+  LOCAL apoapsisPush TO _launchParams["apoapsisPush"].
+
+  PRINT "Pushing out apoapsis..".
+  LOCK STEERING TO ANTIRADIAL().
+  WAITSTEERING(5).
+  LOCK THROTTLE TO 1.
+  WAIT UNTIL ETAAPOAPSIS_CLAMPED() >= apoapsisPush.
+  UNLOCK THROTTLE.
+  UNLOCK STEERING.
+}
+
+LOCAL FUNCTION DropBoosters {
+  LOCAL circularizationStage IS _launchParams["circularizationStage"].
+
+  AUTOSTAGE_OFF().
+
+  IF circularizationStage = -1 RETURN.
+
+  PRINT "Dropping boosters..".
+  STAGE_TO(circularizationStage).
+}
+
+LOCAL FUNCTION Circularize {
+  PRINT "Finalizing orbit..".
   ADD CircularizeAtApoNode().
   ExecuteNode().
 }
